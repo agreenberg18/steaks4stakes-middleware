@@ -17,13 +17,9 @@ async function getStake(stakeid) {
     await client.connect();
     const database = client.db("steaks4stakes");
     const steaks_4Stakes = database.collection("steaks_4_stakes");
-    // Query for a movie that has the title 'The Room'
+
     const query = { stakeid: stakeid };
     const options = {
-      // sort matched documents in descending order by rating
-     // sort: { "imdb.rating": -1 },
-      // Include only the `title` and `imdb` fields in the returned document
-    //  projection: { _id: 0, title: 1, imdb: 1 },
     };
     const steak = await steaks_4Stakes.findOne(query, options);
     // since this method returns the matched document, not a cursor, print it directly
@@ -33,7 +29,7 @@ async function getStake(stakeid) {
     await client.close();
   }
 }
-// getStake('SNNq1rwZ').catch(console.dir);
+
 
 async function createSteak(steakid, initiator, phone, expDate) {
   try {
@@ -61,11 +57,11 @@ async function addFriend(steakid, name, number) {
     await client.connect();
     const database = client.db("steaks4stakes");
     const steaks = database.collection("steaks_4_stakes");
-    // create a filter for a movie to update
+    // create a filter for a steak to update
     const filter = { stakeid: steakid };
-    // this option instructs the method to create a document if no documents match the filter
+
     const options = { upsert: false };
-    // create a document that sets the plot of the movie
+
     
     const updateDoc = {
       $push: {
