@@ -1,4 +1,5 @@
 const { query } = require('express');
+
 const express = require('express')
 const app = express()
 app.use(express.json());       // to support JSON-encoded bodies
@@ -25,13 +26,18 @@ async function getStake(stakeid) {
     // since this method returns the matched document, not a cursor, print it directly
     console.log(steak);
     return steak
-  } finally {
+  }
+  catch (e) {
+    console.log(e)
+    return e
+  }
+  finally {
     await client.close();
   }
 }
 
 
-async function createSteak(steakid, initiator, phone, expDate) {
+async function createSteak(steakid, stakes, restaurant, initiator, phone, expDate) {
   try {
     await client.connect();
     const database = client.db("steaks4stakes");
@@ -42,7 +48,9 @@ async function createSteak(steakid, initiator, phone, expDate) {
       initiator: initiator,
       number: phone,
       date: expDate,
-      friends : []
+      stakes: stakes,
+      restaurant: restaurant,
+      friends: []
     }
     const result = await steaksCollection.insertOne(doc);
     console.log(`A document was inserted with the _id: ${result.insertedId}`);
@@ -62,10 +70,10 @@ async function addFriend(steakid, name, number) {
 
     const options = { upsert: false };
 
-    
+
     const updateDoc = {
       $push: {
-        friends :{"name" : name, "number": number}  
+        friends: { "name": name, "number": number }
       },
     };
     const result = await steaks.updateOne(filter, updateDoc, options);
@@ -79,53 +87,59 @@ async function addFriend(steakid, name, number) {
 }
 
 
-app.get('/', function (req, res) {
+app.get('/api', function (req, res) {
   res.send('hello world')
 })
 
-app.get('/get-steak', async function (req, res) {
-  console.log(typeof(req.query))
+app.get('/api/testvar', function (req, res) {
+  res.send(MONGONAME)
+})
+
+app.get('/api/get-steak', async function (req, res) {
+  console.log(typeof (req.query))
   let queryParams = req.query
   steakid = queryParams.steakid
   let steakNode = await getStake(steakid).catch(console.dir);
-  delete steakNode.number
-  steakNode.friends.forEach(friend =>{
-    delete friend.number
-  })
+  // delete steakNode.number
+  // steakNode.friends.forEach(friend =>{
+  //   delete friend.number
+  // })
   res.send(steakNode)
 })
 
-app.post('/create-steak', async function (req, res) {
+app.post('/api/create-steak', async function (req, res) {
   let steakid = req.body.steakid
   let phone = req.body.phone
   let name = req.body.name
   let date = req.body.date
-  let newSteakNode = await createSteak(steakid, name, phone, date).catch(console.dir)
-  if (newSteakNode.acknowledged === true){
+  let stakes = req.body.stakes
+  let restaurant = req.body.restaurant
+  let newSteakNode = await createSteak(steakid,stakes,restaurant, name, phone, date).catch(console.dir)
+  if (newSteakNode.acknowledged === true) {
     let steakNode = await getStake(steakid).catch(console.dir);
     delete steakNode.number
     res.send(steakNode)
   }
-  else{
-    res.send({"error" : "something happened...it didn't work"})
+  else {
+    res.send({ "error": "something happened...it didn't work" })
   }
 })
 
-app.post('/add-friend', async function (req, res) {
+app.post('/api/add-friend', async function (req, res) {
   let steakid = req.body.steakid
   let name = req.body.name
   let phone = req.body.phone
-  let newFriend = await addFriend(steakid,name,phone)
-  if (newFriend.acknowledged === true){
+  let newFriend = await addFriend(steakid, name, phone)
+  if (newFriend.acknowledged === true) {
     let steakNode = await getStake(steakid).catch(console.dir);
     delete steakNode.number
-    steakNode.friends.forEach(friend =>{
+    steakNode.friends.forEach(friend => {
       delete friend.number
     })
     res.send(steakNode)
   }
-  else{
-    res.send({"error" : "something happened...it didn't work"})
+  else {
+    res.send({ "error": "something happened...it didn't work" })
   }
 })
 
