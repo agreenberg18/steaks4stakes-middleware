@@ -50,6 +50,7 @@ async function createSteak(steakid, stakes, restaurant, initiator, phone, expDat
       date: expDate,
       stakes: stakes,
       restaurant: restaurant,
+      active : false,
       friends: []
     }
     const result = await steaksCollection.insertOne(doc);
